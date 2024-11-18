@@ -62,7 +62,6 @@ def basic_stats_analysis(data_path, selected_stats):
         x = np.arange(len(means))
         # Check if any std values are None
         has_std = all(s is not None for s in std)
-        print(std)
         if has_std:
             # Plot with error bars if we have std values
             ax.bar(x, means, yerr=std, capsize=5, alpha=0.8, 
@@ -73,9 +72,6 @@ def basic_stats_analysis(data_path, selected_stats):
         # Customize the plot
         ax.set_ylabel(f'{f} (seconds)')
         ax.set_title(f'Mean of {f} time by queries')
-        # ax.set_xticks(x)
-        # plt.suptitle(f"Time taken: {f} seconds")
-        # Adjust layout to prevent label cutoff
         plt.tight_layout()
         figures.append(fig)
     

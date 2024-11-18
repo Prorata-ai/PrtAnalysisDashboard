@@ -111,7 +111,6 @@ def analyze():
     try:
         if analysis_type == "generate_logs":
             try:
-                print(folder_name)
                 process_logs.parse_logs(folder_name)
                 return jsonify({
                         "success": True,
@@ -132,7 +131,7 @@ def analyze():
                     'redirect_url': f'/show_output/{folder_name}',
                     'new_tab': True
                 }
-            })
+            }), 200
         elif analysis_type=="basic_stats":
             return jsonify({
                 'success': True, 
@@ -140,7 +139,7 @@ def analyze():
                     'redirect_url': f'/basic_stats/{folder_name}',
                     'new_tab': True
                 }
-            })
+            }), 200
         elif analysis_type=="retrieval_analysis":
             return jsonify({
                 'success': True, 
@@ -148,7 +147,7 @@ def analyze():
                     'redirect_url': f'/retrieval_analysis/{folder_name}',
                     'new_tab': True
                 }
-            })
+            }), 200
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})

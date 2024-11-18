@@ -23,8 +23,6 @@ def run_analysis(folder_name, analysis_type):
     elif analysis_type == "generate_logs":
         return generate_logs(data_path)
     elif analysis_type == "basic_stats":
-        print(f"Running basic stats analysis for {data_path}")
-        print("offloading to stats_analysis.py")
         return basic_stats_analysis(data_path)
     else:
         raise ValueError(f"Unknown analysis type: {analysis_type}")
@@ -38,7 +36,6 @@ def retrieval_analysis(data_path):
             print(key, value)
 
 def basic_stats_analysis(data_path,selected_stats):
-    print(f"Running basic stats analysis for {data_path}")
     figures = basic_analysis(data_path,selected_stats)
     return figures
 
