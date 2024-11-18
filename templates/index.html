@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProRata Analysis Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">ProRata Analysis Dashboard (Local Gist)</h1>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Select Data Folder</h5>
+                    </div>
+                    <div class="card-body">
+                        <select id="folder-select" class="form-select">
+                            <option value="">Choose a folder...</option>
+                            {% for folder in data_folders %}
+                            <option value="{{ folder }}">{{ folder }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Select Analysis Type</h5>
+                    </div>
+                    <div class="card-body">
+                        <select id="analysis-select" class="form-select">
+                            <option value="">Choose analysis...</option>
+                            {% for analysis in analyses %}
+                            <option value="{{ analysis }}">{{ analysis|replace('_', ' ')|title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <button id="run-analysis" class="btn btn-primary">Run Analysis</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Results</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="results-area">
+                            Select a folder and analysis type to begin...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#run-analysis').click(function() {
+                const folder = $('#folder-select').val();
+                const analysisType = $('#analysis-select').val();
+                
+                if (!folder || !analysisType) {
+                    alert('Please select both a folder and analysis type');
+                    return;
+                }
+                
+                $.ajax({
+                    url: '/run_analysis',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        folder: folder,
+                        analysis_type: analysisType
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            if (response.results && response.results.new_tab) {
+                                // Open in new tab
+                                window.open(response.results.redirect_url, '_blank');
+                            } else if (response.result) {
+                                // Display other analysis results
+                                $('#results-area').html('<pre>' + JSON.stringify(response.result, null, 2) + '</pre>');
+                            }
+                        } else {
+                            $('#results-area').html('Error: ' + response.error);
+                        }
+                    },
+                    error: function() {
+                        $('#results-area').html('Error running analysis');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
