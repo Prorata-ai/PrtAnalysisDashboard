@@ -56,20 +56,8 @@
             </div>
         </div>
         
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Results</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="results-area">
-                            Select a folder and analysis type to begin...
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Removed the Results tab below -->
+
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -97,16 +85,19 @@
                             if (response.results && response.results.new_tab) {
                                 // Open in new tab
                                 window.open(response.results.redirect_url, '_blank');
+                            } else if (response.results && response.results.message) {
+                                // Show popup for generate_logs
+                                alert(response.results.message);
                             } else if (response.result) {
                                 // Display other analysis results
                                 $('#results-area').html('<pre>' + JSON.stringify(response.result, null, 2) + '</pre>');
                             }
                         } else {
-                            $('#results-area').html('Error: ' + response.error);
+                            alert('Error: ' + response.error);
                         }
                     },
                     error: function() {
-                        $('#results-area').html('Error running analysis');
+                        alert('Error running analysis');
                     }
                 });
             });

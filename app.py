@@ -110,7 +110,21 @@ def analyze():
     analysis_type = data.get('analysis_type')
     try:
         if analysis_type == "generate_logs":
- 
+            try:
+                print(folder_name)
+                process_logs.parse_logs(folder_name)
+                return jsonify({
+                        "success": True,
+                        "results": {
+                            "message": f"Logs generated successfully for {folder_name}"
+                        }
+                    }), 200
+            except Exception as e:
+                return jsonify({
+                    "success": False,
+                    "error": str(e)
+                }), 400
+            
         if analysis_type == "show_output":
             return jsonify({
                 'success': True, 
@@ -135,6 +149,7 @@ def analyze():
                     'new_tab': True
                 }
             })
+        
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
     

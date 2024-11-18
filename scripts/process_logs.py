@@ -9,7 +9,7 @@ import random
 import argparse
 import re
 import ast
-
+from flask import jsonify
 
 def string_to_dict(node_str):
     input_str = node_str.strip()[9:-1]
@@ -173,9 +173,14 @@ def parse_events(events):
     return results
 
 def parse_logs(log_dir):
-    processed_logs = {}
-    for l in os.listdir(f"{log_dir}/thread_logs"):
-        results = parse_events(open(f"{log_dir}/thread_logs/{l}", "r").readlines())
-        processed_logs[l] = results
-    with open(f"{log_dir}/processed_logs.json", "w") as f:
-        json.dump(processed_logs, f, indent=4)
+    try:
+        processed_logs = {}
+        for l in os.listdir(f"{log_dir}/thread_logs"):
+            results = parse_events(open(f"{log_dir}/thread_logs/{l}", "r").readlines())
+            processed_logs[l] = results
+        with open(f"{log_dir}/processed_logs.json", "w") as f:
+            json.dump(processed_logs, f, indent=4)
+        return jsonify({"message": "Logs generated successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    
