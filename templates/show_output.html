@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ProRata Log Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .json-key {
+            cursor: pointer;
+            color: #2a5d84;
+        }
+        .json-container {
+            margin-left: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .controls {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            display: flex;
+            gap: 20px;
+        }
+        .select-container {
+            flex: 1;
+        }
+        .checkbox-list {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        .checkbox-item label {
+            cursor: pointer;
+        }
+        button {
+            padding: 5px 15px;
+            margin-top: 10px;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px;
+        }
+        .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1000; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto; /* 10% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more or less, depending on screen size */
+            max-height: 70%; /* Limit height */
+            overflow-y: auto; /* Vertical scrollbar */
+            border-radius: 5px;
+            position: relative;
+        }
+        .modal-close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+        .modal-close:hover,
+        .modal-close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        pre {
+            white-space: pre-wrap; /* Wrap lines */
+            word-wrap: break-word; /* Break long words */
+        }
+    </style>
+</head>
+<body>
+    <h1>ProRata Log Viewer</h1>
+    <div class="controls">
+        <div class="select-container">
+            <label>Select thread keys to display:</label>
+            <div id="keySelect" class="checkbox-list"></div>
+            <div class="button-container">
+                <button onclick="selectAll('keySelect')">Select All</button>
+                <button onclick="deselectAll('keySelect')">Deselect All</button>
+            </div>
+        </div>
+        <div class="select-container">
+            <label>Select fields to display:</label>
+            <div id="fieldSelect" class="checkbox-list"></div>
+            <div class="button-container">
+                <button onclick="selectAll('fieldSelect')">Select All</button>
+                <button onclick="deselectAll('fieldSelect')">Deselect All</button>
+            </div>
+        </div>
+        <button onclick="updateDisplay()" style="height: 40px;">Update View</button>
+    </div>
+    <div id="json"></div>
+
+    <!-- Modal Structure -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span id="modalClose" class="modal-close">&times;</span>
+            <pre id="modalBody"></pre>
+        </div>
+    </div>
+
+    <script>
+        const data = {{ json_str|safe }};
+        const subKeys = {{ sub_keys_str|safe }};
+        
+        function createCheckbox(container, value, name) {
+            const div = document.createElement('div');
+            div.className = 'checkbox-item';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = name + '_' + value;
+            checkbox.value = value;
+            checkbox.name = name;
+            
+            const label = document.createElement('label');
+            label.htmlFor = checkbox.id;
+            label.textContent = value;
+            
+            div.appendChild(checkbox);
+            div.appendChild(label);
+            container.appendChild(div);
+        }
+        
+        // Populate the key checkboxes
+        const keySelect = document.getElementById('keySelect');
+        Object.keys(data).forEach(key => {
+            createCheckbox(keySelect, key, 'keys');
+        });
+        
+        // Populate the field checkboxes
+        const fieldSelect = document.getElementById('fieldSelect');
+        subKeys.forEach(key => {
+            createCheckbox(fieldSelect, key, 'fields');
+        });
+        
+        function selectAll(containerId) {
+            const container = document.getElementById(containerId);
+            container.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        }
+        
+        function deselectAll(containerId) {
+            const container = document.getElementById(containerId);
+            container.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        }
+        
+        function createTree(container, obj, selectedFields) {
+            const ul = document.createElement('ul');
+            for (let key in obj) {
+                const li = document.createElement('li');
+                const span = document.createElement('span');
+                span.textContent = key;
+                span.classList.add('json-key');
+                li.appendChild(span);
+
+                // Create a nested list for the selected fields
+                const childUl = document.createElement('ul');
+                childUl.classList.add('json-container');
+                
+                selectedFields.forEach(field => {
+                    if (obj[key][field] !== undefined) {
+                        const fieldLi = document.createElement('li');
+                        
+                        if (typeof obj[key][field] === 'object' && obj[key][field] !== null) {
+                            // Create a hyperlink for object values
+                            const link = document.createElement('a');
+                            link.href = '#';
+                            link.textContent = 'View Details';
+                            link.onclick = function(e) {
+                                e.preventDefault();
+                                openModal(JSON.stringify(obj[key][field], null, 2));
+                            };
+                            fieldLi.appendChild(document.createTextNode(`${field}: `));
+                            fieldLi.appendChild(link);
+                        } else {
+                            // Display primitive values normally
+                            fieldLi.textContent = `${field}: ${obj[key][field]}`;
+                        }
+
+                        childUl.appendChild(fieldLi);
+                    }
+                });
+
+                if (childUl.children.length > 0) {
+                    span.addEventListener('click', function() {
+                        childUl.classList.toggle('hidden');
+                    });
+                    li.appendChild(childUl);
+                    ul.appendChild(li);
+                }
+            }
+            return ul;
+        }
+
+        function openModal(content) {
+        const modal = document.getElementById('modal');
+        const modalBody = document.getElementById('modalBody');
+        modalBody.textContent = content;
+        modal.style.display = 'block';
+        }
+
+        // Function to close the modal
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.style.display = 'none';
+        }
+
+        // Event listener for closing the modal when clicking on the close button
+        document.getElementById('modalClose').onclick = function() {
+            closeModal();
+        }
+
+        // Event listener for closing the modal when clicking outside the modal content
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+                
+        function updateDisplay() {
+            const selectedKeys = Array.from(document.querySelectorAll('#keySelect input:checked')).map(cb => cb.value);
+            const selectedFields = Array.from(document.querySelectorAll('#fieldSelect input:checked')).map(cb => cb.value);
+            
+            const filteredData = {};
+            selectedKeys.forEach(key => {
+                if (data[key]) {
+                    filteredData[key] = data[key];
+                }
+            });
+
+            const container = document.getElementById('json');
+            container.innerHTML = '';
+            container.appendChild(createTree(container, filteredData, selectedFields));
+        }
+
+        // Initial display - everything deselected
+        deselectAll('keySelect');
+        deselectAll('fieldSelect');
+        updateDisplay();
+    </script>
+    
+</body>
+</html>
