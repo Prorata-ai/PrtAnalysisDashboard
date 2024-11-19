@@ -13,7 +13,7 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 import uuid
 from flask import send_from_directory  # Add this import at the top with other imports
-from scripts import process_logs
+from scripts import process_logs, retrieval_analysis
 
 app = Flask(__name__)
 
@@ -88,20 +88,26 @@ def basic_stats_page(folder_name):
 
 @app.route('/retrieval_analysis/<folder_name>', methods=['GET', 'POST'])
 def rerieval_analysis_page(folder_name):
-    data_path = os.path.join('data', folder_name)
-    retrieval_analysis(data_path)
-    # questions = retrieval_analysis.fetch_questions(data_path)
-    # try:
-    #     return jsonify({"message": "Retrieval analysis workigng"}), 200
-    #     # result = show_output(data_path)
-    #     # Access the correct keys from the result dictionary
-    # #     return render_template('show_output.html', 
-    # #                          json_str=json.dumps(result["json_data"], default=str),
-    # #                          sub_keys_str=json.dumps(result["sub_keys"]))
-    # except ValueError as e:
-    #     return jsonify({"error": str(e)}), 400
-    return jsonify({"message": "Retrieval analysis working"}), 200
+    print("it works")
+    data_path = os.path.join(DATA_FOLDER, folder_name)
+    scores,texts = retrieval_analysis.retrieve_questions(data_path)
+    return jsonify({"message": "it works"}), 200
+    # data_path = os.path.join(DATA_FOLDER, folder_name)
+    # if request.method == 'POST':
+    #     try:
+    #         data_path = os.path.join(DATA_FOLDER, folder_name)
+    #         # # Retrieve additional data from the request if needed
+    #         # # For example, filters or parameters for retrieval
+    #         # data = request.get_json()
+    #         # processed_data = retrieval_analysis(data_path, data)
+    #         # return jsonify({'success': True, 'data': processed_data}), 200
+    #         return jsonify({"message": "works"}), 200
+    #     except Exception as e:
+    #         return jsonify({'success': False, 'error': str(e)}), 400
+    # else:
+    #     return jsonify({'message': 'Send a POST request with necessary parameters.'}), 200
 
+    
 
 @app.route('/run_analysis', methods=['POST'])
 def analyze():
@@ -140,7 +146,7 @@ def analyze():
                     'new_tab': True
                 }
             }), 200
-        elif analysis_type=="retrieval_analysis":
+        elif analysis_type == "retrieval_analysis":
             return jsonify({
                 'success': True, 
                 'results': {
@@ -148,6 +154,7 @@ def analyze():
                     'new_tab': True
                 }
             }), 200
+          
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
