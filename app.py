@@ -99,6 +99,28 @@ def retrieval_analysis_page(folder_name):
     sub_option = data.get('sub_option')
     selected_key = data.get('selected_key') 
     
+    if analysis_type == "cumulative":
+        if sub_option == "score":
+            try:
+                fig = retrieval_analysis.calculate_cumulative_scores(scores)
+                # Convert the matplotlib figure to a base64-encoded string
+                buf = BytesIO()
+                fig.savefig(buf, format='png', bbox_inches='tight')
+                buf.seek(0)
+                image_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+                plt.close(fig)  # Close the figure to free memory
+                
+                return jsonify({
+                'success': True,
+                'results': {
+                    'analysis_type': 'cumulative',
+                    'plot_image': image_base64,
+                    'stats': {}  # Include any additional statistics if needed
+                }
+                }), 200
+            except Exception as e:
+                return jsonify({'success': False, 'error': str(e)}), 400
+    
     if analysis_type == "individual":
         if sub_option == "score" and not selected_key:
             try:

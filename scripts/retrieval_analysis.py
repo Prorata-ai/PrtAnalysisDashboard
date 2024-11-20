@@ -27,12 +27,40 @@ def retrieve_questions(data_path):
     return scores, texts
 
 
+def calculate_cumulative_scores(scores):
+    max_scores = []
+    min_scores = []
+    for k,v in scores.items():
+        for i in v:
+            max_scores.append(max(i))
+            min_scores.append(min(i))
+        # else:
+        #     print(v)
+        #     max_scores.append(max(v))
+        #     min_scores.append(min(v))
+    
+    # Create figure with two subplots
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
+    
+    # Plot max scores
+    ax1.plot(max_scores)
+    ax1.set_title('Distribution of Maximum Scores')
+    ax1.set_xlabel('Sentences')
+    ax1.set_ylabel('Score')
+    
+    # Plot min scores 
+    ax2.plot(min_scores)
+    ax2.set_title('Distribution of Minimum Scores')
+    ax2.set_xlabel('Sentences')
+    ax2.set_ylabel('Score')
+    plt.tight_layout()
+    return fig
+    
 def generate_plot(scores, selected_key):
     data_item_mean = None
     data_item_std = None
     data_item = scores[selected_key]
     data_item = np.array(data_item)
-    print(data_item.shape)
     if len(data_item)>1:
         data_item_mean = np.mean(data_item, axis=0)
         data_item_std = np.std(data_item, axis=0)
@@ -49,7 +77,6 @@ def generate_plot(scores, selected_key):
     plt.title(f'Retrieval Scores')
     plt.ylabel('Score')
     plt.xlabel('K')
-    # plt.grid(True, alpha=0.3)
-    # plt.savefig("demo")
+    plt.tight_layout()
     return fig
     
