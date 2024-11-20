@@ -4,7 +4,7 @@ from scripts.analysis import (
     run_analysis,
     show_output,
     basic_stats_analysis,
-    retrieval_analysis
+    # retrieval_analysis
 )
 import sys 
 import json
@@ -87,20 +87,22 @@ def basic_stats_page(folder_name):
 
 
 @app.route('/retrieval_analysis/<folder_name>', methods=['GET', 'POST'])
-def rerieval_analysis_page(folder_name):
+def retrieval_analysis_page(folder_name):
     data_path = os.path.join(DATA_FOLDER, folder_name)
     scores,texts = retrieval_analysis.retrieve_questions(data_path)
+    
     if request.method == 'GET':
         return render_template('retrieval_analysis.html', folder_name=folder_name)
+    
     data = request.get_json()
     analysis_type = data.get('analysis_type')
     sub_option = data.get('sub_option')
+    selected_key = data.get('selected_key') 
+    
     if analysis_type == "individual":
-        if sub_option == "score":
+        if sub_option == "score" and not selected_key:
             try:
-                # Prepare the list of keys (LLM questions)
                 keys = list(scores.keys())
-                print(keys)
                 return jsonify({
                     'success': True,
                     'results': {
@@ -110,11 +112,54 @@ def rerieval_analysis_page(folder_name):
                 }), 200
             except Exception as e:
                 return jsonify({'success': False, 'error': str(e)}), 400
+
+        elif sub_option == "score" and selected_key:
+            try:
+                # Generate plot for the selected_key
+                fig = retrieval_analysis.generate_plot(scores, selected_key)
+                # Convert the matplotlib figure to a base64-encoded string
+                buf = BytesIO()
+                fig.savefig(buf, format='png', bbox_inches='tight')
+                buf.seek(0)
+                image_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+                plt.close(fig)  # Close the figure to free memory
                 
+                return jsonify({
+                    'success': True,
+                    'plot_image': image_base64
+                }), 200
+            except Exception as e:
+                return jsonify({'success': False, 'error': str(e)}), 400
 
-    return jsonify({"message": "it works"}), 200
+    elif analysis_type == "cumulative":
+        try:
+            stats = retrieval_analysis.compute_cumulative_stats(scores)
+            return jsonify({
+                'success': True,
+                'results': {
+                    'analysis_type': 'cumulative',
+                    'stats': stats
+                }
+            }), 200
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
     
-
+    return jsonify({"message": "Invalid analysis type"}), 400
+    
+@app.route('/download_image/<folder_name>/<key>', methods=['GET'])
+def download_image(folder_name, key):
+    try:
+        # Construct the filename and path
+        filename = f"{key}.png"
+        file_path = os.path.join(TEMP_IMAGE_FOLDER, filename)
+        
+        # Check if the file exists
+        if os.path.exists(file_path):
+            return send_from_directory(TEMP_IMAGE_FOLDER, filename, as_attachment=True)
+        else:
+            return jsonify({'success': False, 'error': 'Image not found.'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
     
 
 @app.route('/run_analysis', methods=['POST'])
