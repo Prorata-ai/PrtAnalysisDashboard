@@ -23,22 +23,49 @@ def run_analysis(folder_name, analysis_type):
     elif analysis_type == "generate_logs":
         return generate_logs(data_path)
     elif analysis_type == "basic_stats":
-        print(f"Running basic stats analysis for {data_path}")
-        print("offloading to stats_analysis.py")
         return basic_stats_analysis(data_path)
     else:
         raise ValueError(f"Unknown analysis type: {analysis_type}")
 
-def retrieval_analysis(data_path):
-    def fetch_questions(data_path):
-        processed_logs = os.path.join(data_path, 'processed_logs.json')
-        with open(processed_logs, 'r') as file:
-            data = json.load(file)
-        for key, value in data.items():
-            print(key, value)
+def retrieval_analysis(data_path, parameters):
+    """
+    Process the JSON file based on provided parameters.
+
+    Args:
+        data_path (str): Path to the data folder.
+        parameters (dict): Parameters for processing.
+
+    Returns:
+        dict: Processed data.
+    """
+    json_file = os.path.join(data_path, 'processed_logs.json')
+
+    # if not os.path.exists(json_file):
+    #     raise FileNotFoundError("No processed log file found in the specified directory")
+
+    # # Read the JSON file
+    # with open(json_file, 'r') as file:
+    #     json_data = json.load(file)
+
+    # # Example processing: filter data based on parameters
+    # # Adjust the processing logic as per your requirements
+    # filter_key = parameters.get('filter_key')
+    # filter_value = parameters.get('filter_value')
+
+    # if filter_key and filter_value:
+    #     filtered_data = {
+    #         key: value for key, value in json_data.items()
+    #         if value.get(filter_key) == filter_value
+    #     }
+    # else:
+    #     filtered_data = json_data  # No filtering applied
+
+    # # Further processing can be done here
+    # # For example, aggregating data, calculating statistics, etc.
+
+    # return filtered_data
 
 def basic_stats_analysis(data_path,selected_stats):
-    print(f"Running basic stats analysis for {data_path}")
     figures = basic_analysis(data_path,selected_stats)
     return figures
 
