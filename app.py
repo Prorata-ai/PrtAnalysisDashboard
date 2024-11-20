@@ -116,6 +116,7 @@ def retrieval_analysis_page(folder_name):
         elif sub_option == "score" and selected_key:
             try:
                 # Generate plot for the selected_key
+                print(len(scores[selected_key]))
                 fig = retrieval_analysis.generate_plot(scores, selected_key)
                 # Convert the matplotlib figure to a base64-encoded string
                 buf = BytesIO()
