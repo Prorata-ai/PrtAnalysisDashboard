@@ -33,3 +33,9 @@ build/
 # System files
 .DS_Store
 Thumbs.db
+
+# Image files
+*.png
+*.jpg
+*.jpeg
+*.gif
