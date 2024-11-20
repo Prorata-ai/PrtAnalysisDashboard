@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Retrieval Analysis</title>
+    <style>
+        /* Similar styling to show_output.html and basic_stats.html */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        .option-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .option-group label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .sub-options {
+            margin-left: 20px;
+            display: none; /* Hidden by default */
+        }
+        button {
+            padding: 5px 15px;
+            margin-top: 10px;
+            cursor: pointer;
+            height: 40px;
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto; /* 10% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more or less, depending on screen size */
+            max-height: 70%; /* Limit height */
+            overflow-y: auto; /* Vertical scrollbar */
+            border-radius: 5px;
+            position: relative;
+        }
+        .modal-close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+        .modal-close:hover,
+        .modal-close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .output-container {
+            margin-top: 20px;
+        }
+        pre {
+            white-space: pre-wrap; /* Wrap lines */
+            word-wrap: break-word; /* Break long words */
+        }
+        /* New Styles for Hyperlinks */
+        .output-container ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .output-container li {
+            margin-bottom: 10px;
+        }
+        .output-container a {
+            text-decoration: none;
+            color: #007BFF;
+        }
+        .output-container a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Retrieval Analysis</h1>
+    <div class="controls">
+        <form id="analysisForm" onsubmit="submitForm(event)">
+            <div class="option-group" id="analysisTypeGroup">
+                <label>Select Analysis Type:</label>
+                <div>
+                    <input type="radio" id="individual" name="analysis_type" value="individual">
+                    <label for="individual">Individual Queries</label>
+                </div>
+                <div>
+                    <input type="radio" id="cumulative" name="analysis_type" value="cumulative">
+                    <label for="cumulative">Cumulative Statistics</label>
+                </div>
+            </div>
+            <div class="option-group sub-options" id="individualOptions">
+                <label>Select Sub-Option:</label>
+                <div>
+                    <input type="radio" id="score" name="sub_option" value="score">
+                    <label for="score">Retrieval Scores</label>
+                </div>
+                <div>
+                    <input type="radio" id="quality" name="sub_option" value="quality">
+                    <label for="quality">Quality of Reference</label>
+                </div>
+            </div>
+            <button type="submit">Run Analysis</button>
+        </form>
+    </div>
+    <div id="output" class="output-container"></div>
+
+    <!-- Modal Structure -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span id="modalClose" class="modal-close">&times;</span>
+            <pre id="modalBody"></pre>
+        </div>
+    </div>
+
+    <script>
+        // Show or hide sub-options based on analysis type selection
+        document.querySelectorAll('input[name="analysis_type"]').forEach((elem) => {
+            elem.addEventListener("change", function(event) {
+                const individualOptions = document.getElementById('individualOptions');
+                const cumulativeOption = document.getElementById('cumulative').parentElement;
+                const individualOption = document.getElementById('individual').parentElement;
+                
+                if (event.target.value === 'individual') {
+                    individualOptions.style.display = 'flex';
+                    // Hide cumulative option
+                    cumulativeOption.style.display = 'none';
+                } else if (event.target.value === 'cumulative') {
+                    individualOptions.style.display = 'none';
+                    // Show cumulative option in case it was hidden before
+                    cumulativeOption.style.display = 'block';
+                }
+            });
+        });
+
+        function openModal(content) {
+            const modal = document.getElementById('modal');
+            const modalBody = document.getElementById('modalBody');
+            modalBody.textContent = content;
+            modal.style.display = 'block';
+        }
+
+        // Function to close the modal
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.style.display = 'none';
+        }
+
+        // Event listener for closing the modal when clicking on the close button
+        document.getElementById('modalClose').onclick = function() {
+            closeModal();
+        }
+
+        // Event listener for closing the modal when clicking outside the modal content
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        async function submitForm(event) {
+            event.preventDefault();
+            const form = document.getElementById('analysisForm');
+            const formData = new FormData(form);
+            const analysisType = formData.get('analysis_type');
+            const subOption = formData.get('sub_option') || null;
+
+            if (analysisType === 'individual' && !subOption) {
+                alert('Please select a sub-option for Individual Queries.');
+                return;
+            }
+
+            const payload = {
+                analysis_type: analysisType,
+                sub_option: subOption
+            };
+
+            try {
+                const response = await fetch(`/retrieval_analysis/{{ folder_name }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken(), // Ensure CSRF token is sent if required
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    const outputContainer = document.getElementById('output');
+                    outputContainer.innerHTML = '';
+                    if (data.results.redirect_url) {
+                        // Handle redirection or display data accordingly
+                        outputContainer.innerHTML = `<pre>${JSON.stringify(data.results, null, 2)}</pre>`;
+                    } else {
+                        // Display analysis results
+                        if (data.results.analysis_type === 'individual') {
+                            const { keys, sub_option } = data.results;
+                            if (keys && keys.length > 0) {
+                                const links = keys.map(key => `<li><a href="/details/${encodeURIComponent(key)}">${key}</a></li>`).join('');
+                                outputContainer.innerHTML = `
+                                    <h2>Individual Queries Analysis</h2>
+                                    <ul>
+                                        ${links}
+                                    </ul>
+                                `;
+                            } else {
+                                outputContainer.innerHTML = `
+                                    <h2>Individual Queries Analysis</h2>
+                                    <p>No keys found.</p>
+                                `;
+                            }
+                        } else if (data.results.analysis_type === 'cumulative') {
+                            const { stats } = data.results;
+                            outputContainer.innerHTML = `
+                                <h2>Cumulative Statistics</h2>
+                                <pre>${JSON.stringify(stats, null, 2)}</pre>
+                            `;
+                        }
+                    }
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while performing the analysis.');
+            }
+        }
+
+        // Function to retrieve CSRF token if using Django
+        function getCSRFToken() {
+            let cookieValue = null;
+            const name = 'csrftoken';
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

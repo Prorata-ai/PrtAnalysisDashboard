@@ -88,24 +88,32 @@ def basic_stats_page(folder_name):
 
 @app.route('/retrieval_analysis/<folder_name>', methods=['GET', 'POST'])
 def rerieval_analysis_page(folder_name):
-    print("it works")
     data_path = os.path.join(DATA_FOLDER, folder_name)
     scores,texts = retrieval_analysis.retrieve_questions(data_path)
+    if request.method == 'GET':
+        return render_template('retrieval_analysis.html', folder_name=folder_name)
+    data = request.get_json()
+    analysis_type = data.get('analysis_type')
+    sub_option = data.get('sub_option')
+    if analysis_type == "individual":
+        if sub_option == "score":
+            try:
+                # Prepare the list of keys (LLM questions)
+                keys = list(scores.keys())
+                print(keys)
+                return jsonify({
+                    'success': True,
+                    'results': {
+                        'analysis_type': 'individual',
+                        'keys': keys
+                    }
+                }), 200
+            except Exception as e:
+                return jsonify({'success': False, 'error': str(e)}), 400
+                
+
     return jsonify({"message": "it works"}), 200
-    # data_path = os.path.join(DATA_FOLDER, folder_name)
-    # if request.method == 'POST':
-    #     try:
-    #         data_path = os.path.join(DATA_FOLDER, folder_name)
-    #         # # Retrieve additional data from the request if needed
-    #         # # For example, filters or parameters for retrieval
-    #         # data = request.get_json()
-    #         # processed_data = retrieval_analysis(data_path, data)
-    #         # return jsonify({'success': True, 'data': processed_data}), 200
-    #         return jsonify({"message": "works"}), 200
-    #     except Exception as e:
-    #         return jsonify({'success': False, 'error': str(e)}), 400
-    # else:
-    #     return jsonify({'message': 'Send a POST request with necessary parameters.'}), 200
+    
 
     
 

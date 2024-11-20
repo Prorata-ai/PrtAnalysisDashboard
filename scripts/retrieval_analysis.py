@@ -16,3 +16,7 @@ def retrieve_questions(data_path):
         scores[v["LLM_question"]] = score
         texts[v["LLM_question"]] = text
     return scores, texts
+
+
+def individual_plots(data):
+    return None
