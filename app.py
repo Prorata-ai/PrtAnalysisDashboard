@@ -49,6 +49,18 @@ def index():
                          data_folders=data_folders,
                          analyses=available_analyses)
 
+
+@app.route('/run_experiment', methods=['POST'])
+def run_experiment():
+    # Placeholder for experiment functionality
+    return jsonify({'success': False, 'error': 'Not implemented yet'}), 501
+
+@app.route('/comparative_analysis', methods=['POST'])
+def comparative_analysis():
+    # Placeholder for comparative analysis functionality
+    return jsonify({'success': False, 'error': 'Not implemented yet'}), 501
+
+
 @app.route('/show_output/<folder_name>')
 def show_output_analysis(folder_name):
     data_path = os.path.join('data', folder_name)
@@ -117,10 +129,15 @@ def retrieval_analysis_page(folder_name):
                     'plot_image': image_base64,
                     'stats': {}  # Include any additional statistics if needed
                 }
-                }), 200
+                })
             except Exception as e:
                 return jsonify({'success': False, 'error': str(e)}), 400
-    
+        if sub_option == "quality":
+            try:
+                fig = retrieval_analysis.calculate_cumulative_texts(texts)
+            except Exception as e:
+                return jsonify({'success': False, 'error': str(e)}), 400
+            
     if analysis_type == "individual":
         if sub_option == "score" and not selected_key:
             try:
@@ -133,14 +150,18 @@ def retrieval_analysis_page(folder_name):
                     }
                 }), 200
             except Exception as e:
-                return jsonify({'success': False, 'error': str(e)}), 400
+                return jsonify({'success': False, 'error': str(e)}), 400            
 
         elif sub_option == "score" and selected_key:
             try:
                 # Generate plot for the selected_key
-                print(len(scores[selected_key]))
                 fig = retrieval_analysis.generate_plot(scores, selected_key)
-                # Convert the matplotlib figure to a base64-encoded string
+                # Save the figure to the temp folder
+                filename = f"{selected_key}.png"
+                file_path = os.path.join(TEMP_IMAGE_FOLDER, filename)
+                fig.savefig(file_path, format='png', bbox_inches='tight')
+                
+                # Convert to base64 for display
                 buf = BytesIO()
                 fig.savefig(buf, format='png', bbox_inches='tight')
                 buf.seek(0)

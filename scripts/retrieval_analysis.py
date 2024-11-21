@@ -26,6 +26,8 @@ def retrieve_questions(data_path):
         print(len(scores[v["LLM_question"]])) 
     return scores, texts
 
+def calculate_cumulative_texts(texts):
+    print(texts.keys())
 
 def calculate_cumulative_scores(scores):
     max_scores = []
@@ -33,12 +35,7 @@ def calculate_cumulative_scores(scores):
     for k,v in scores.items():
         for i in v:
             max_scores.append(max(i))
-            min_scores.append(min(i))
-        # else:
-        #     print(v)
-        #     max_scores.append(max(v))
-        #     min_scores.append(min(v))
-    
+            min_scores.append(min(i)) 
     # Create figure with two subplots
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
     
@@ -74,7 +71,7 @@ def generate_plot(scores, selected_key):
         plt.errorbar(ks, data_item, yerr=data_item_std, marker='o', capsize=5)
     else:
         plt.plot(ks, data_item, marker='o')  # Added markers to see individual points
-    plt.title(f'Retrieval Scores')
+    plt.title(f'Retrieval Scores: {selected_key}')
     plt.ylabel('Score')
     plt.xlabel('K')
     plt.tight_layout()

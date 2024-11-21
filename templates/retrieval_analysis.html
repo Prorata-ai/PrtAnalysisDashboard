@@ -295,7 +295,32 @@
                         ${data.results.stats ? `<pre>${JSON.stringify(data.results.stats, null, 2)}</pre>` : ''}
                     `;
                 }
-                // ... rest of the code handling individual analysis ...
+                // Handle individual analysis results
+                if (analysisType === 'individual') {
+                    if (data.results && data.results.keys) {
+                        // Create plot section if it doesn't exist
+                        let plotSection = document.getElementById('plotSection');
+                        if (!plotSection) {
+                            plotSection = document.createElement('div');
+                            plotSection.id = 'plotSection';
+                            plotSection.className = 'plot-section';
+                            outputContainer.appendChild(plotSection);
+                        }
+
+                        // Create list of keys
+                        const keysList = document.createElement('ul');
+                        data.results.keys.forEach(key => {
+                            const li = document.createElement('li');
+                            const link = document.createElement('a');
+                            link.textContent = key;
+                            link.onclick = () => togglePlot(key);
+                            li.appendChild(link);
+                            keysList.appendChild(li);
+                        });
+                        
+                        outputContainer.insertBefore(keysList, plotSection);
+                    }
+                }
             } catch (error) {
                 console.error('Form submission error:', error);
                 document.getElementById('output').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;

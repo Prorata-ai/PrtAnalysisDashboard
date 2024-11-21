@@ -10,54 +10,85 @@
 <body>
     <div class="container mt-5">
         <h1 class="mb-4">ProRata Analysis Dashboard (Local Gist)</h1>
+        <div class="alert alert-info mb-4">
+            <p>This analysis boardboard is designed to help you analyze and understand the results of ProRata systems. It provides a variety of tools to help visualize and understand the different components of the system.</p>
+            <p>At this point, the dashboard is still under development, so some functionality may not be available. Most importantly, the dashboard works only locally.</p>
+        </div>
         
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Select Data Folder</h5>
-                    </div>
-                    <div class="card-body">
-                        <select id="folder-select" class="form-select">
-                            <option value="">Choose a folder...</option>
-                            {% for folder in data_folders %}
-                            <option value="{{ folder }}">{{ folder }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
+        <!-- Run Experiment Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Run Experiment</h3>
             </div>
-            
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Select Analysis Type</h5>
-                    </div>
-                    <div class="card-body">
-                        <select id="analysis-select" class="form-select">
-                            <option value="">Choose analysis...</option>
-                            {% for analysis in analyses %}
-                            <option value="{{ analysis }}">{{ analysis|replace('_', ' ')|title }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
+            <div class="card-body">
+                <!-- Add experiment controls here -->
+                <p class="text-muted">Experiment controls coming soon...</p>
             </div>
-            
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Actions</h5>
+        </div>
+
+        <!-- Individual Analysis Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Individual Analysis</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Select Data Folder</h5>
+                            </div>
+                            <div class="card-body">
+                                <select id="folder-select" class="form-select">
+                                    <option value="">Choose a folder...</option>
+                                    {% for folder in data_folders %}
+                                    <option value="{{ folder }}">{{ folder }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <button id="run-analysis" class="btn btn-primary">Run Analysis</button>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Select Analysis Type</h5>
+                            </div>
+                            <div class="card-body">
+                                <select id="analysis-select" class="form-select">
+                                    <option value="">Choose analysis...</option>
+                                    {% for analysis in analyses %}
+                                    <option value="{{ analysis }}">{{ analysis|replace('_', ' ')|title }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <button id="run-analysis" class="btn btn-primary">Run Analysis</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Removed the Results tab below -->
 
+        <!-- Comparative Analysis Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Comparative Analysis</h3>
+            </div>
+            <div class="card-body">
+                <!-- Add comparative analysis controls here -->
+                <p class="text-muted">Comparative analysis tools coming soon...</p>
+            </div>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
