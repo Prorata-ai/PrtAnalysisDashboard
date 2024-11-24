@@ -21,8 +21,7 @@
                 <h3>Run Experiment</h3>
             </div>
             <div class="card-body">
-                <!-- Add experiment controls here -->
-                <p class="text-muted">Experiment controls coming soon...</p>
+                <button id="new-experiment" class="btn btn-primary">Start New Experiment</button>
             </div>
         </div>
 
@@ -85,15 +84,58 @@
                 <h3>Comparative Analysis</h3>
             </div>
             <div class="card-body">
-                <!-- Add comparative analysis controls here -->
-                <p class="text-muted">Comparative analysis tools coming soon...</p>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Select First Folder</h5>
+                            </div>
+                            <div class="card-body">
+                                <select id="folder1-select" class="form-select">
+                                    <option value="">Choose first folder...</option>
+                                    {% for folder in data_folders %}
+                                    <option value="{{ folder }}">{{ folder }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Select Second Folder</h5>
+                            </div>
+                            <div class="card-body">
+                                <select id="folder2-select" class="form-select">
+                                    <option value="">Choose second folder...</option>
+                                    {% for folder in data_folders %}
+                                    <option value="{{ folder }}">{{ folder }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <button id="run-comparative" class="btn btn-primary">Analyze</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </div>        
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
+            // Individual Analysis Handler
             $('#run-analysis').click(function() {
                 const folder = $('#folder-select').val();
                 const analysisType = $('#analysis-select').val();
@@ -129,6 +171,37 @@
                     },
                     error: function() {
                         alert('Error running analysis');
+                    }
+                });
+            });
+
+            // Comparative Analysis Handler
+            $('#run-comparative').click(function() {
+                const folder1 = $('#folder1-select').val();
+                const folder2 = $('#folder2-select').val();
+                
+                if (!folder1 || !folder2) {
+                    alert('Please select two folders for comparison');
+                    return;
+                }
+                
+                $.ajax({
+                    url: '/comparative_analysis',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        folder1: folder1,
+                        folder2: folder2
+                    }),
+                    success: function(response) {
+                        if (response.success && response.results.redirect_url) {
+                            window.open(response.results.redirect_url, '_blank');
+                        } else {
+                            alert('Error: ' + response.error);
+                        }
+                    },
+                    error: function() {
+                        alert('Error running comparative analysis');
                     }
                 });
             });

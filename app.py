@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import uuid
 from flask import send_from_directory  # Add this import at the top with other imports
 from scripts import process_logs, retrieval_analysis
+from scripts import comparitive_analysis 
 
 app = Flask(__name__)
 
@@ -29,6 +30,51 @@ FULL_AVAILABLE_STATS = [
 # Add these lines after defining DATA_FOLDER and FULL_AVAILABLE_STATS
 TEMP_IMAGE_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'temp_images')
 os.makedirs(TEMP_IMAGE_FOLDER, exist_ok=True)
+
+# Add these constants after your existing ones
+EXPERIMENT_TYPES = {
+    ''
+    # 'retrieval_experiment': ['basic_retrieval', 'advanced_retrieval', 'hybrid_retrieval'],
+    # 'chunking_experiment': ['fixed_size', 'semantic_chunks', 'hybrid_chunks'],
+    # 'embedding_experiment': ['openai_ada', 'local_bert', 'custom_model']
+}
+
+def find_common_ngrams(text1, text2, n=2):
+    """Find common and distinct n-grams between two texts"""
+    # Convert texts to lowercase and split into words
+    words1 = text1.lower().split()
+    words2 = text2.lower().split()
+    
+    # Create n-grams for both texts
+    def get_ngrams(words, n):
+        return [' '.join(words[i:i+n]) for i in range(len(words)-n+1)]
+    
+    ngrams1 = set(get_ngrams(words1, n))
+    ngrams2 = set(get_ngrams(words2, n))
+    
+    # Find common n-grams
+    common = ngrams1.intersection(ngrams2)
+    
+    # Highlight text
+    def highlight_text(text, common_ngrams):
+        words = text.split()
+        highlighted = []
+        i = 0
+        while i < len(words):
+            matched = False
+            for gram_size in range(min(5, len(words)-i), 1, -1):  # Try larger n-grams first
+                ngram = ' '.join(words[i:i+gram_size]).lower()
+                if ngram in common_ngrams:
+                    highlighted.append(f'<span class="common">{" ".join(words[i:i+gram_size])}</span>')
+                    i += gram_size
+                    matched = True
+                    break
+            if not matched:
+                highlighted.append(f'<span class="distinct">{words[i]}</span>')
+                i += 1
+        return ' '.join(highlighted)
+    
+    return highlight_text(text1, common), highlight_text(text2, common)
 
 @app.route('/')
 def index():
@@ -57,8 +103,77 @@ def run_experiment():
 
 @app.route('/comparative_analysis', methods=['POST'])
 def comparative_analysis():
-    # Placeholder for comparative analysis functionality
-    return jsonify({'success': False, 'error': 'Not implemented yet'}), 501
+    data = request.get_json()
+    folder1 = data.get('folder1')
+    folder2 = data.get('folder2')
+    
+    if not folder1 or not folder2:
+        return jsonify({'success': False, 'error': 'Please select two folders'}), 400
+        
+    try:
+        return jsonify({
+            'success': True,
+            'results': {
+                'redirect_url': f'/comparative_analysis/{folder1}/{folder2}',
+                'new_tab': True
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/comparative_analysis/<folder1>/<folder2>')
+def comparative_analysis_page(folder1, folder2):
+    return render_template('comparative_analysis.html', 
+                         folder1=folder1,
+                         folder2=folder2)
+
+@app.route('/get_analysis')
+def get_analysis():
+    analysis_type = request.args.get('type')
+    folder1 = request.args.get('folder1')
+    folder2 = request.args.get('folder2')
+    
+    print(f"Selected analysis type: {analysis_type}")
+    print(f"Comparing folders: {folder1} vs {folder2}")
+
+    comparitive_logs = comparitive_analysis.comparison_logs(folder1,folder2)
+
+    if analysis_type == "outputs":
+        query, model1, model2 = comparitive_analysis.compare_outputs(comparitive_logs)
+        # Create an HTML table with Bootstrap styling and add CSS styles
+        html_content = f"""
+        <style>
+            .common {{ color: green; }}
+            .distinct {{ color: red; }}
+        </style>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Query</th>
+                    <th>{folder1}</th>
+                    <th>{folder2}</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+        # Add rows for each set of outputs with highlighted text
+        for q, m1, m2 in zip(query, model1, model2):
+            highlighted_m1, highlighted_m2 = find_common_ngrams(m1, m2)
+            html_content += f"""
+                <tr>
+                    <td>{q}</td>
+                    <td>{highlighted_m1}</td>
+                    <td>{highlighted_m2}</td>
+                </tr>
+            """
+        html_content += """
+            </tbody>
+        </table>
+        """
+        return html_content
+    
+    # For now, return a simple message (you can expand this later)
+    return f"Analysis type '{analysis_type}' selected for comparison between {folder1} and {folder2}"
 
 
 @app.route('/show_output/<folder_name>')
